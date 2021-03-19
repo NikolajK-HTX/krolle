@@ -5,9 +5,9 @@ Servo servo1;
 Servo servo2;
 Servo servo3;
 
-const int servo1Pin = ?;
-const int servo2Pin = ?;
-const int servo3Pin = ?;
+const int servo1Pin = 3;
+const int servo2Pin = 5;
+const int servo3Pin = 6;
 // ##### SERVO SETTINGS END   #####
 
 void setup() {
@@ -31,13 +31,14 @@ void loop() {
       switch (i) {
         case 0:
           servo1.write(incomingValue);
-          break
+          Serial.println("Hello " + String(incomingValue));
+          break;
         case 1:
           servo2.write(incomingValue);
-          break
+          break;
         case 2:
           servo3.write(incomingValue);
-          break
+          break;
       }
     }
   }
