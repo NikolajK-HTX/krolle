@@ -36,8 +36,20 @@ bool checkWin() {
   }
 }
 
-float calculateAngleFromPos(int boardIndex) {
-  float distance = sqrt(sq(abs(realPositions[boardIndex*2))+sq(abs(realPositions[boardIndex*2+1])));
-  float servoAngle = acos((sq(12)+sq(distance)-sq(13))/(2*12*distance))+HALF_PI;
+// man burde overveje hvor præcist udregningerne skal være
+// og måske bruge float i stedet for int. Jeg bruger allerede
+// en opganget version af tallet i int for at få mere præcision
+int calculateAngleFromPos(int boardIndex) {
+  // Ifølge Arduino reference skal der ikke stå en funktion
+  // inde i sq(), hvilket der gjorde før hvor abs() stod derinde
+  int x = abs(realPositions[boardIndex*2]);
+  int y = abs(realPositions[boardIndex*2+1]);
+  int square = sq(x)+sq(y);
+  // Arduino reference siger ikke noget om der må stå funktioner
+  // inde i sqrt(), men for en sikkerhedsskyld gøres det ikke
+  int distance = sqrt(square);
+  distance = distance/100;
+  int servoAngle = acos((sq(12)+sq(distance)-sq(13))/(2*12*distance))+HALF_PI;
+  
   return servoAngle;
 }
