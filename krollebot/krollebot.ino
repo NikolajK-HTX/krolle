@@ -2,6 +2,12 @@ const int boardSize = 3;
 
 int board [3][3];
 
+// positioner målt fra robotarmens origin
+// størrelserne er ganget med 100
+int realPositions [18] = {-1050, 2200, 0, 2200, 1050, 2200,
+                          -1050, 1500, 0, 1500, 1050, 1500,
+                          -1050,  800, 0,  800, 1050,  800};
+
 void setup() {
   // put your setup code here, to run once:
 
@@ -28,4 +34,10 @@ bool checkWin() {
       // vundet
     }
   }
+}
+
+float calculateAngleFromPos(int boardIndex) {
+  float distance = sqrt(sq(abs(realPositions[boardIndex*2))+sq(abs(realPositions[boardIndex*2+1])));
+  float servoAngle = acos((sq(12)+sq(distance)-sq(13))/(2*12*distance))+HALF_PI;
+  return servoAngle;
 }
