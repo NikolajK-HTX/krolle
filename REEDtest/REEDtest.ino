@@ -9,6 +9,7 @@
 
 const int reedInputPin = 2;
 const int counterClockPin = 4;
+// const int counterResetPin = 8;
 
 bool reedBoard[9];
 bool pastReedBoard[9];
