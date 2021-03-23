@@ -1,9 +1,17 @@
 /*
-   Lavet af Buster, Emil og Nikolaj Jehøj-Krogager
-   21/03/2021
-   Dette er hovedprogrammet til Krollebot: Kryds og
-   bolle med robotarm.
-*/
+ * Lavet af Buster, Emil og Nikolaj Jehøj-Krogager
+ * 21/03/2021
+ * Dette er hovedprogrammet til Krollebot: Kryds og
+ * bolle med robotarm.
+ * Følgende pins er brugt
+ *  - REED input    = 2
+ *  - 4017 clock    = 4
+ *  - Servo 1       = 3
+ *  - Servo 2       = 5
+ *  - Servo 3       = 6
+ *  - Elektromagnet = 7
+ *  - 4017 reset    = 8
+ */
 
 const int boardSize = 3;
 
