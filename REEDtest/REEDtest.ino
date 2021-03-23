@@ -38,7 +38,7 @@ void loop() {
   // sammenlign de to arrays
   for (int i = 0; i<9; i++) {
     if (reedBoard[i] != pastReedBoard[i]) {
-      Serial.println("En brik er flyttet!");
+      Serial.println("En brik er flyttet til plads " + String(i));
     }
   }
   // gem array
