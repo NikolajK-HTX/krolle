@@ -27,6 +27,9 @@ float realPositions [18] = { -10.50, 22.00, 0, 22.00, 10.50, 22.00,
                              -10.50, 15.00, 0, 15.00, 10.50, 15.00,
                              -10.50,  8.00, 0,  8.00, 10.50,  8.00
                          };
+float r1 = 11.5;
+float r2 = 13;
+
 
 // servomotorernes vinkler i robotarmen
 int angleZero = 90;
@@ -106,9 +109,9 @@ void calculateAngleFromPos(int boardIndex) {
   float servoAngle = HALF_PI-asin((realPositions[boardIndex * 2])/distance);
   angleZero = 180 / PI * servoAngle;
   // Second servo
-  servoAngle = acos((sq(12) + sq(distance) - sq(13)) / (2 * 12 * distance)) + HALF_PI;
+  servoAngle = acos((sq(r1) + sq(distance) - sq(r2)) / (2 * r1 * distance)) + HALF_PI;
   angleOne = 180 / PI * servoAngle;
   // Third servo
-  servoAngle = acos((sq(12) + sq(13) - sq(distance)) / (2 * 12 * 13));
-  angleTwo = 180 / PI * servoAngle;
+  servoAngle = acos((sq(r1) + sq(r2) - sq(distance)) / (2 * r1 * r2));
+  angleTwo = 180-(180 / PI * servoAngle);
 }
