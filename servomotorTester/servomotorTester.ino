@@ -22,23 +22,19 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available() > 0) {
+  while (Serial.available() > 0) {
     for (int i = 0; i < 3; i++) {
       // forventer 30;20;60; med andre tal
       String incomingString = Serial.readStringUntil(';');
+      Serial.println(incomingString);
       int incomingValue = incomingString.toInt();
       // skriv til den rigtige servo
-      switch (i) {
-        case 0:
-          servo1.write(incomingValue);
-          Serial.println("Hello " + String(incomingValue));
-          break;
-        case 1:
-          servo2.write(incomingValue);
-          break;
-        case 2:
-          servo3.write(incomingValue);
-          break;
+      if (i==0) {
+        servo1.write(incomingValue);
+      } else if (i==1) {
+        servo2.write(incomingValue);
+      } else if (i==2) {
+        servo3.write(incomingValue);
       }
     }
   }
