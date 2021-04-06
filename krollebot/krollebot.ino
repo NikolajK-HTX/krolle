@@ -23,9 +23,9 @@ String currentTurn = "X";
 // positioner målt fra robotarmens origin
 // størrelserne er ganget med 100 og står altså
 // i 10^(-4) meter.
-float realPositions [18] = { -10.50, 22.00, 0, 22.00, 10.50, 22.00,
-                             -10.50, 15.00, 0, 15.00, 10.50, 15.00,
-                             -10.50,  8.00, 0,  8.00, 10.50,  8.00
+float realPositions [18] = { -7, 21.50, 0, 21.50, 7, 21.50,
+                             -7, 14.50, 0, 14.50, 7, 14.50,
+                             -7,  7.50, 0,  7.50, 7,  7.50
                          };
 float r1 = 11.5;
 float r2 = 13;
@@ -34,7 +34,7 @@ float r2 = 13;
 // servomotorernes vinkler i robotarmen
 int angleZero = 90;
 int angleOne = 90;
-int angleTwo = 90;
+int angleTwo = 0;
 
 
 Servo servo1;
