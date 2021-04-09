@@ -63,9 +63,9 @@ void loop() {
     positionc = incomingString.toInt();
 
     calculateAngleFromPos(positionc);
-    servo1.write(angleZero);
-    servo2.write(angleOne);
-    servo3.write(angleTwo);
+    moveServoTo(servo1, angleZero);
+    moveServoTo(servo2, angleOne);
+    moveServoTo(servo3, angleTwo);
     Serial.print(String(positionc) + "  -  ");
     Serial.print(angleZero);
     Serial.print("   ");
@@ -116,4 +116,23 @@ void calculateAngleFromPos(int boardIndex) {
   // Third servo
   servoAngle = acos((sq(r1) + sq(r2) - sq(distance)) / (2 * r1 * r2));
   angleTwo = 180 - (180 / PI * servoAngle);
+}
+
+
+// bevæger servomotorerne langsommere på en blokerende måde
+void moveServoTo(Servo servo, int angleTo) {
+  while (true) {
+    int writeAngle = 0;
+    int angleFrom = servo.read();
+    
+    if (angleFrom < angleTo) {
+      writeAngle = angleFrom+1;
+    } else if (angleFrom > angleTo) {
+      writeAngle = angleFrom-1;
+    } else if (angleFrom == angleTo) {
+      break;
+    }
+    servo.write(writeAngle);
+    delay(50);
+  }
 }
