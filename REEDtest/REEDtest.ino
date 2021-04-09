@@ -81,7 +81,7 @@ void loop() {
   // vis på LED-Grid
   for (int i = 0; i < 9; i++) {
     if(reedBoard[i] == true) {
-      delay(50);
+      delay(2);
     }
 
     // clock
