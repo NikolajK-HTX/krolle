@@ -1,19 +1,20 @@
 #include <Servo.h>
 
 /*
- * Lavet af Buster, Emil og Nikolaj Jehøj-Krogager
- * 21/03/2021
- * Dette er hovedprogrammet til Krollebot: Kryds og
- * bolle med robotarm.
- * Følgende pins er brugt
- *  - REED input    = 2
- *  - 4017 clock    = 4
- *  - Servo 1       = 3
- *  - Servo 2       = 5
- *  - Servo 3       = 6
- *  - Elektromagnet = 7
- *  - 4017 reset    = 8
- */
+   Lavet af Buster, Emil og Nikolaj Jehøj-Krogager
+   21/03/2021
+   Dette er hovedprogrammet til Krollebot: Kryds og
+   bolle med robotarm.
+   Følgende pins er brugt
+    - REED input         = 2
+    - 4017 clock         = 4
+    - Servo 1            = 3
+    - Servo 2            = 5
+    - Servo 3            = 6
+    - Clock til LED-Grid = 7
+    - 4017 reset         = 8
+    - Reset til LED-Grid = 9
+*/
 
 const int boardSize = 3;
 
@@ -26,7 +27,7 @@ String currentTurn = "X";
 float realPositions [18] = { -7, 21.50, 0, 21.50, 7, 21.50,
                              -7, 14.50, 0, 14.50, 7, 14.50,
                              -7,  7.50, 0,  7.50, 7,  7.50
-                         };
+                           };
 float r1 = 11.5;
 float r2 = 13;
 
@@ -54,24 +55,25 @@ void setup() {
   Serial.begin(9600);
 
 }
-
 int positionc = 0;
-
 void loop() {
   // put your main code here, to run repeatedly:
-  calculateAngleFromPos(positionc);
-  servo1.write(angleZero);
-  servo2.write(angleOne);
-  servo3.write(angleTwo);
-  Serial.print(String(positionc) + "  -  ");
-  Serial.print(angleZero);
-  Serial.print("   ");
-  Serial.print(angleOne);
-  Serial.print("   ");
-  Serial.print(angleTwo);
-  Serial.println();
-  delay(2000);
-  positionc = (positionc+1) % 9;
+  if (Serial.available()) {
+    String incomingString = Serial.readStringUntil('\n');
+    positionc = incomingString.toInt();
+
+    calculateAngleFromPos(positionc);
+    servo1.write(angleZero);
+    servo2.write(angleOne);
+    servo3.write(angleTwo);
+    Serial.print(String(positionc) + "  -  ");
+    Serial.print(angleZero);
+    Serial.print("   ");
+    Serial.print(angleOne);
+    Serial.print("   ");
+    Serial.print(angleTwo);
+    Serial.println();
+  }
 }
 
 bool checkWin() {
@@ -106,12 +108,12 @@ void calculateAngleFromPos(int boardIndex) {
   // inde i sqrt(), men for en sikkerhedsskyld gøres det ikke
   float distance = sqrt(square);
   // First servo
-  float servoAngle = HALF_PI-asin((realPositions[boardIndex * 2])/distance);
+  float servoAngle = HALF_PI - asin((realPositions[boardIndex * 2]) / distance);
   angleZero = 180 / PI * servoAngle;
   // Second servo
   servoAngle = acos((sq(r1) + sq(distance) - sq(r2)) / (2 * r1 * distance)) + HALF_PI;
   angleOne = 180 / PI * servoAngle;
   // Third servo
   servoAngle = acos((sq(r1) + sq(r2) - sq(distance)) / (2 * r1 * r2));
-  angleTwo = 180-(180 / PI * servoAngle);
+  angleTwo = 180 - (180 / PI * servoAngle);
 }
