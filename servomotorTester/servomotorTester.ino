@@ -26,16 +26,35 @@ void loop() {
     for (int i = 0; i < 3; i++) {
       // forventer 30;20;60; med andre tal
       String incomingString = Serial.readStringUntil(';');
-      Serial.println(incomingString);
+      Serial.print(incomingString + "   ");
       int incomingValue = incomingString.toInt();
       // skriv til den rigtige servo
       if (i==0) {
-        servo1.write(incomingValue);
+        moveServoTo(incomingValue, servo1);
       } else if (i==1) {
-        servo2.write(incomingValue);
+        moveServoTo(incomingValue, servo2);
       } else if (i==2) {
-        servo3.write(incomingValue);
+        moveServoTo(incomingValue, servo3);
       }
     }
+    Serial.println();
   }
+}
+
+void moveServoTo(int angleTo, Servo servo) {
+  while (true) {
+    int writeAngle = 0;
+    int angleFrom = servo.read();
+    
+    if (angleFrom < angleTo) {
+      writeAngle = angleFrom+1;
+    } else if (angleFrom > angleTo) {
+      writeAngle = angleFrom-1;
+    } else if (angleFrom == angleTo) {
+      break;
+    }
+    servo.write(writeAngle);
+    delay(50);
+  }
+
 }

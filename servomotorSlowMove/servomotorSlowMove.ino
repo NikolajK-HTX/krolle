@@ -4,24 +4,24 @@
 
 */
 
-Servo servo;
+Servo servo1;
 
 const int servoPin = 3;
 
 void setup() {
   // put your setup code here, to run once:
-  servo.attach(servoPin);
+  servo1.attach(servoPin);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-  moveServoTo(120);
+  moveServoTo(servo1, 120);
   delay(2000);
-  moveServoTo(60);
+  moveServoTo(servo1, 60);
   delay(2000);
 }
 
-void moveServoTo(int angleTo) {
+void moveServoTo(Servo servo, int angleTo) {
   while (true) {
     int writeAngle = 0;
     int angleFrom = servo.read();
