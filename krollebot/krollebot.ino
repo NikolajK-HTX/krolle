@@ -56,7 +56,7 @@ void setup() {
   // ##### SERVO SETUP END   #####
   Serial.begin(9600);
 
-  Serial.println("Skriv positionen robotarmen skal dreje hen til");
+  Serial.println("Skriv positionen robotarmen skal dreje hen til:");
 
 }
 

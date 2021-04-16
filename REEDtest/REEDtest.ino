@@ -9,6 +9,12 @@
    LED-Grid:
     - Clock til LED-Grid 4017 på pin 7
     - Reset til LED-Grid 4017 på pin 9
+
+   Man skal huske at have dioder mellem REED-kontakten mellem 
+   den og jord, før jord forbindes med de andre REED-kontakter.
+   Hvis man ikke gør det, virker opstillingen ikke efter hensigten
+   da den ikke kan registrere mere end en tændt REED-kontakt
+   (det var lidt for mange IKKE'r).
 */
 
 const int reedInputPin = 2;
