@@ -28,15 +28,17 @@ float realPositions [18] = { -7, 21.50, 0, 21.50, 7, 21.50,
                              -7, 14.50, 0, 14.50, 7, 14.50,
                              -7,  7.50, 0,  7.50, 7,  7.50
                            };
+// længden af robotarmens led i cm (se tegning)
 float r1 = 11.5;
 float r2 = 13;
-
+// hvor langt ned skal armen gå i cm
+float armDownOffset = 0;
+float robotArmHeight = 9;
 
 // servomotorernes vinkler i robotarmen
 int angleZero = 90;
 int angleOne = 90;
 int angleTwo = 0;
-
 
 Servo servo1;
 Servo servo2;
@@ -54,10 +56,14 @@ void setup() {
   // ##### SERVO SETUP END   #####
   Serial.begin(9600);
 
+  Serial.println("Skriv positionen robotarmen skal dreje hen til");
+
 }
+
 int positionc = 0;
 void loop() {
-  // put your main code here, to run repeatedly:
+  // venter input for at bestemme hvilken position robotarmen skal
+  // gå hen til. Det er af debug grunde.
   if (Serial.available()) {
     String incomingString = Serial.readStringUntil('\n');
     positionc = incomingString.toInt();
@@ -94,27 +100,37 @@ bool checkWin() {
   }
 }
 
-// man burde overveje hvor præcist udregningerne skal være
-// og måske bruge float i stedet for int. Jeg bruger allerede
-// en opganget version af tallet i int for at få mere præcision.
-// De står altså i 10^(-4) meter i stedet for 10^(-2), som er cm.
 void calculateAngleFromPos(int boardIndex) {
+  // Afstanden mellem armen og bræt-positionen bestemmes med Pythagoras' læresætning
+  float x = realPositions[boardIndex * 2];
+  float xAbs = abs(x);
+  float y = realPositions[boardIndex * 2 + 1];
+  float yAbs = abs(y);
+
   // Ifølge Arduino reference skal der ikke stå en funktion
   // inde i sq(), hvilket der gjorde før hvor abs() stod derinde
-  float x = abs(realPositions[boardIndex * 2]);
-  float y = abs(realPositions[boardIndex * 2 + 1]);
-  float square = sq(x) + sq(y);
-  // Arduino reference siger ikke noget om der må stå funktioner
+  // https://www.arduino.cc/reference/en/language/functions/math/sq/
+  float xySquared = sq(xAbs) + sq(yAbs);
+
+  // Arduino reference siger ikke noget om, at der må stå funktioner
   // inde i sqrt(), men for en sikkerhedsskyld gøres det ikke
-  float distance = sqrt(square);
-  // First servo
-  float servoAngle = HALF_PI - asin((realPositions[boardIndex * 2]) / distance);
+  float distanceArmToPosition = sqrt(xySquared);
+
+  float tempSquared = sq(distanceArmToPosition) + sq(armDownOffset);
+  float offsetDistance = sqrt(tempSquared);
+  float angleOffset = asin(armDownOffset / offsetDistance);
+
+  // funktionerne i C++ regner med radianer når der skrives til
+  // servomotorerne skal det være i grader, derfor omregnes det til sidst
+  // første servomotor
+  float servoAngle = HALF_PI - asin(x / distanceArmToPosition);
   angleZero = 180 / PI * servoAngle;
-  // Second servo
-  servoAngle = acos((sq(r1) + sq(distance) - sq(r2)) / (2 * r1 * distance)) + HALF_PI;
+  // anden servomotor
+  servoAngle = acos((sq(r1) + sq(offsetDistance) - sq(r2)) / (2 * r1 * offsetDistance))
+               + HALF_PI - angleOffset;
   angleOne = 180 / PI * servoAngle;
-  // Third servo
-  servoAngle = acos((sq(r1) + sq(r2) - sq(distance)) / (2 * r1 * r2));
+  // tredje servomotor
+  servoAngle = acos((sq(r1) + sq(r2) - sq(offsetDistance)) / (2 * r1 * r2));
   angleTwo = 180 - (180 / PI * servoAngle);
 }
 
@@ -124,11 +140,11 @@ void moveServoTo(Servo servo, int angleTo) {
   while (true) {
     int writeAngle = 0;
     int angleFrom = servo.read();
-    
+
     if (angleFrom < angleTo) {
-      writeAngle = angleFrom+1;
+      writeAngle = angleFrom + 1;
     } else if (angleFrom > angleTo) {
-      writeAngle = angleFrom-1;
+      writeAngle = angleFrom - 1;
     } else if (angleFrom == angleTo) {
       break;
     }
