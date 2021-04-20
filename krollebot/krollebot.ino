@@ -24,16 +24,17 @@ String currentTurn = "X";
 // positioner målt fra robotarmens origin
 // størrelserne er ganget med 100 og står altså
 // i 10^(-4) meter.
-float realPositions [18] = { -7, 21.50, 0, 21.50, 7, 21.50,
-                             -7, 14.50, 0, 14.50, 7, 14.50,
-                             -7,  7.50, 0,  7.50, 7,  7.50
+float realPositions [18] = { -7, 22, 0, 22, 7, 22,
+                             -7, 15, 0, 15, 7, 15,
+                             -7,  8, 0,  8, 7,  8
                            };
+                           
 // længden af robotarmens led i cm (se tegning)
-float r1 = 11.5;
-float r2 = 13;
+float r1 = 12.5;
+float r2 = 11;
 // hvor langt ned skal armen gå i cm
-float armDownOffset = 0;
-float robotArmHeight = 9;
+float armDownOffset = 11;
+float robotArmHeight = 11;
 
 // servomotorernes vinkler i robotarmen
 int angleZero = 90;
@@ -53,6 +54,10 @@ void setup() {
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
   servo3.attach(servo3Pin);
+
+  servo1.write(angleZero);
+  servo2.write(angleOne);
+  servo3.write(angleTwo);
   // ##### SERVO SETUP END   #####
   Serial.begin(9600);
 
@@ -120,6 +125,9 @@ void calculateAngleFromPos(int boardIndex) {
   float offsetDistance = sqrt(tempSquared);
   float angleOffset = asin(armDownOffset / offsetDistance);
 
+  Serial.print("Distance from arm to pos is ");
+  Serial.println(distanceArmToPosition);
+
   // funktionerne i C++ regner med radianer når der skrives til
   // servomotorerne skal det være i grader, derfor omregnes det til sidst
   // første servomotor
@@ -131,7 +139,7 @@ void calculateAngleFromPos(int boardIndex) {
   angleOne = 180 / PI * servoAngle;
   // tredje servomotor
   servoAngle = acos((sq(r1) + sq(r2) - sq(offsetDistance)) / (2 * r1 * r2));
-  angleTwo = 180 - (180 / PI * servoAngle);
+  angleTwo = 180 - (180 / PI * servoAngle) + 7;
 }
 
 
