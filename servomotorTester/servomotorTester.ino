@@ -1,12 +1,3 @@
-/* Dette program bruges til at teste servomotorerne.
-   Du bruger det ved at skrive f.eks. '90;90;0;', hvor
-   de tre servomotorers vinkler sættes til det.
-   HUSK at bruge 'no line ending'!
-
-   Lavet af Nikolaj Jehøj-Krogager
-   til Elektronik & IT eksamensprojekt
-*/
-
 // ##### SERVO SETTINGS START #####
 #include <Servo.h>
 
@@ -33,17 +24,16 @@ void setup() {
 void loop() {
   while (Serial.available() > 0) {
     for (int i = 0; i < 3; i++) {
-      // forventer 30;20;60; eller andre tal, men husk ';'
-      // da det er hvad koden forventer
+      // forventer 30;20;60; med andre tal
       String incomingString = Serial.readStringUntil(';');
       Serial.print(incomingString + "   ");
       int incomingValue = incomingString.toInt();
       // skriv til den rigtige servo
-      if (i == 0) {
+      if (i==0) {
         moveServoTo(incomingValue, servo1);
-      } else if (i == 1) {
+      } else if (i==1) {
         moveServoTo(incomingValue, servo2);
-      } else if (i == 2) {
+      } else if (i==2) {
         moveServoTo(incomingValue, servo3);
       }
     }
@@ -51,16 +41,15 @@ void loop() {
   }
 }
 
-// bevæger servomotoren langsommere
 void moveServoTo(int angleTo, Servo servo) {
   while (true) {
     int writeAngle = 0;
     int angleFrom = servo.read();
-
+    
     if (angleFrom < angleTo) {
-      writeAngle = angleFrom + 1;
+      writeAngle = angleFrom+1;
     } else if (angleFrom > angleTo) {
-      writeAngle = angleFrom - 1;
+      writeAngle = angleFrom-1;
     } else if (angleFrom == angleTo) {
       break;
     }
