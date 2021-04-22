@@ -35,7 +35,7 @@ void setup() {
   pinMode(counterResetPin, OUTPUT);
   digitalWrite(counterClockPin, LOW);
   digitalWrite(counterResetPin, LOW);
-  resetCounter();
+  resetCounter(counterResetPin);
 
   for (int i = 0; i < 9; i++) {
     reedBoard[i] = false;
@@ -47,11 +47,16 @@ void setup() {
   pinMode(ledGridResetPin, OUTPUT);
   digitalWrite(ledGridClockPin, LOW);
   digitalWrite(ledGridResetPin, LOW);
+  resetCounter(ledGridResetPin);
+  // parkerer 4017 tælleren til LED på plads 10 (OUTPUT 9)
+  for (int i = 0; i < 9; i++) {
+    clockCounter(ledGridClockPin);
+  }
 }
 
 void loop() {
   // reset 4017 tælleren
-  resetCounter();
+  resetCounter(counterResetPin);
 
   // læs alle REED switch og gem i array
   for (int i = 0; i < 9; i++) {
@@ -59,7 +64,7 @@ void loop() {
     bool sensorVal = digitalRead(reedInputPin);
     reedBoard[i] = sensorVal;
     // Skift til næste REED switch
-    clockCounter();
+    clockCounter(counterClockPin);
   }
 
   for (int i = 0; i < 9; i++) {
@@ -81,30 +86,27 @@ void loop() {
   }
 
   // reset LED-grid
-  digitalWrite(ledGridResetPin, HIGH);
-  delayMicroseconds(1);
-  digitalWrite(ledGridResetPin, LOW);
+  resetCounter(ledGridResetPin);
   // vis på LED-Grid
   for (int i = 0; i < 9; i++) {
     if(reedBoard[i] == true) {
       delay(2);
     }
-
-    // clock
-    digitalWrite(ledGridClockPin, HIGH);
-    delayMicroseconds(1);
-    digitalWrite(ledGridClockPin, LOW);
+    clockCounter(ledGridClockPin);
   }
+  delay(1);
 }
 
-void resetCounter() {
-  digitalWrite(counterResetPin, HIGH);
-  delayMicroseconds(5);
-  digitalWrite(counterResetPin, LOW);
+void resetCounter(int pin) {
+  digitalWrite(pin, HIGH);
+  delayMicroseconds(1);
+  digitalWrite(pin, LOW);
+  delayMicroseconds(1);
 }
 
-void clockCounter() {
-  digitalWrite(counterClockPin, HIGH);
-  delayMicroseconds(5);
-  digitalWrite(counterClockPin, LOW);
+void clockCounter(int pin) {
+  digitalWrite(pin, HIGH);
+  delayMicroseconds(1);
+  digitalWrite(pin, LOW);
+  delayMicroseconds(1);
 }
