@@ -21,19 +21,20 @@ const int boardSize = 3;
 int board [3][3];
 String currentTurn = "X";
 
-// positioner målt fra robotarmens origin
-// størrelserne er ganget med 100 og står altså
-// i 10^(-4) meter.
-float realPositions [18] = { -7, 22, 0, 22, 7, 22,
-                             -7, 15, 0, 15, 7, 15,
-                             -7,  8, 0,  8, 7,  8
-                           };
-                           
-// længden af robotarmens led i cm (se tegning)
-float r1 = 12.5;
-float r2 = 11;
+// Manuelt målte vinkler servomotorerne skal have
+// for at elektromagneten passer præcist til den plads
+int anglePositions [27] = {0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0,
+                           0, 0, 0};
+
 // hvor langt ned skal armen gå i cm
-float armDownOffset = 11;
+float armDownOffset = 0;
 float robotArmHeight = 11;
 
 // servomotorernes vinkler i robotarmen
@@ -59,13 +60,14 @@ void setup() {
   servo2.write(angleOne);
   servo3.write(angleTwo);
   // ##### SERVO SETUP END   #####
+  
   Serial.begin(9600);
-
+  Serial.print("Husk new line. ");
   Serial.println("Skriv positionen robotarmen skal dreje hen til:");
-
 }
 
 int positionc = 0;
+
 void loop() {
   // venter input for at bestemme hvilken position robotarmen skal
   // gå hen til. Det er af debug grunde.
@@ -141,7 +143,6 @@ void calculateAngleFromPos(int boardIndex) {
   servoAngle = acos((sq(r1) + sq(r2) - sq(offsetDistance)) / (2 * r1 * r2));
   angleTwo = 180 - (180 / PI * servoAngle) + 7;
 }
-
 
 // bevæger servomotorerne langsommere på en blokerende måde
 void moveServoTo(Servo servo, int angleTo) {
