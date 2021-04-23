@@ -8,8 +8,7 @@ sio = socketio.Server(cors_allowed_origins='*')
 app = socketio.WSGIApp(sio)
 
 # serial
-ser = serial.Serial('COM3')
-
+# ser = serial.Serial('COM3')
 
 @sio.event
 def connect(sid, environ):
@@ -25,9 +24,10 @@ def disconnect(sid):
     print('disconnect ', sid)
 
 def exit_handler():
-    ser.close()
+    # ser.close()
     print('Programmet lukkes')
 
 if __name__ == '__main__':
     atexit.register(exit_handler)
     eventlet.wsgi.server(eventlet.listen(('localhost', 5001)), app)
+    print("Hej")

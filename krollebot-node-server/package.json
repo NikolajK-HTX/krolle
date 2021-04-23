@@ -1,0 +1,23 @@
+{
+  "name": "krollebot-node-server",
+  "version": "1.0.0",
+  "description": "Eksamensprojekt i Teknikfag",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NikolajK-HTX/krolle.git"
+  },
+  "author": "Nikolaj Jehøj-Krogager",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NikolajK-HTX/krolle/issues"
+  },
+  "homepage": "https://github.com/NikolajK-HTX/krolle#readme",
+  "dependencies": {
+    "serialport": "^9.0.7",
+    "socket.io": "^4.0.1"
+  }
+}
