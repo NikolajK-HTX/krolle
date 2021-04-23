@@ -14,6 +14,7 @@
     - Clock til LED-Grid = 7
     - 4017 reset         = 8
     - Reset til LED-Grid = 9
+    - Elektromagnet IN1  = 11
 */
 
 const int boardSize = 3;
@@ -21,18 +22,23 @@ const int boardSize = 3;
 int board [3][3];
 String currentTurn = "X";
 
+int positionc = 0;
+
 // Manuelt målte vinkler servomotorerne skal have
 // for at elektromagneten passer præcist til den plads
-int anglePositions [27] = {0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0,
-                           0, 0, 0};
+int anglePositions [30] = {100, 107,  60,
+                           85,  115,  75,
+                           72,  110,  65,
+                           103, 130,  105,
+                           81,  132,  112,
+                           62,  129,  105,
+                           118, 148,  142,
+                           82,  155,  153,
+                           50,  146,  136,
+                           83,  150,  100
+                          };
 
+// tror vi ender med ikke at bruge det her
 // hvor langt ned skal armen gå i cm
 float armDownOffset = 0;
 float robotArmHeight = 11;
@@ -50,8 +56,20 @@ const int servo1Pin = 3;
 const int servo2Pin = 5;
 const int servo3Pin = 6;
 
+// ##### LED AND REED SETTINGS  #####
+const int reedInputPin = 2;
+const int counterClockPin = 4;
+const int counterResetPin = 8;
+
+const int ledGridClockPin = 7;
+const int ledGridResetPin = 9;
+
+bool reedBoard[9];
+bool pastReedBoard[9];
+// ##### LED AND REED END       #####
+
 void setup() {
-  // ##### SERVO SETUP START #####
+  // ##### SERVO SETUP START    #####
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);
   servo3.attach(servo3Pin);
@@ -59,27 +77,55 @@ void setup() {
   servo1.write(angleZero);
   servo2.write(angleOne);
   servo3.write(angleTwo);
-  // ##### SERVO SETUP END   #####
-  
+  // ##### SERVO SETUP END      #####
+
+  // ##### LED AND REED SETUP   #####
+  pinMode(reedInputPin, INPUT);
+  pinMode(counterClockPin, OUTPUT);
+  pinMode(counterResetPin, OUTPUT);
+  digitalWrite(counterClockPin, LOW);
+  digitalWrite(counterResetPin, LOW);
+  resetCounter(counterResetPin);
+
+  for (int i = 0; i < 9; i++) {
+    reedBoard[i] = false;
+    pastReedBoard[i] = false;
+  }
+
+  // LED-Grid
+  pinMode(ledGridClockPin, OUTPUT);
+  pinMode(ledGridResetPin, OUTPUT);
+  digitalWrite(ledGridClockPin, LOW);
+  digitalWrite(ledGridResetPin, LOW);
+  resetCounter(ledGridResetPin);
+  // parkerer 4017 tælleren til LED på plads 10 (OUTPUT 9)
+  for (int i = 0; i < 9; i++) {
+    clockCounter(ledGridClockPin);
+  }
+  // ##### LED AND REED END     #####
+
   Serial.begin(9600);
-  Serial.print("Husk new line. ");
+  Serial.print("Debug: Husk new line. ");
   Serial.println("Skriv positionen robotarmen skal dreje hen til:");
 }
 
-int positionc = 0;
-
 void loop() {
+  // ##### INPUT FRA MODSTANDER + FLYT ARM START #####
   // venter input for at bestemme hvilken position robotarmen skal
   // gå hen til. Det er af debug grunde.
   if (Serial.available()) {
     String incomingString = Serial.readStringUntil('\n');
     positionc = incomingString.toInt();
 
-    calculateAngleFromPos(positionc);
+    angleZero = anglePositions[positionc * 3 + 0];
+    angleOne  = anglePositions[positionc * 3 + 1];
+    angleTwo  = anglePositions[positionc * 3 + 2];
+
     moveServoTo(servo1, angleZero);
     moveServoTo(servo2, angleOne);
     moveServoTo(servo3, angleTwo);
-    Serial.print(String(positionc) + "  -  ");
+
+    Serial.print("Debug: Flytter robotarmen til " + String(positionc) + "  -  ");
     Serial.print(angleZero);
     Serial.print("   ");
     Serial.print(angleOne);
@@ -87,6 +133,50 @@ void loop() {
     Serial.print(angleTwo);
     Serial.println();
   }
+  // ##### INPUT FRA MODSTANDER + FLYT ARM END   #####
+
+  // ##### LED AND REED LOOP START #####
+  // reset 4017 tælleren
+  resetCounter(counterResetPin);
+
+  // læs alle REED switch og gem i array
+  for (int i = 0; i < 9; i++) {
+    delayMicroseconds(10);
+    bool sensorVal = digitalRead(reedInputPin);
+    reedBoard[i] = sensorVal;
+    // Skift til næste REED switch
+    clockCounter(counterClockPin);
+  }
+
+  for (int i = 0; i < 9; i++) {
+    Serial.print(reedBoard[i]);
+  }
+  Serial.println();
+
+  // sammenlign de to arrays og sørg for at der er noget på
+  // pladsen
+  for (int i = 0; i < 9; i++) {
+    if (reedBoard[i] != pastReedBoard[i] && reedBoard[i] != false) {
+      Serial.println("En brik er på plads " + String(i));
+    }
+  }
+
+  // gem array
+  for (int i = 0; i < 9; i++) {
+    pastReedBoard[i] = reedBoard[i];
+  }
+
+  // reset LED-grid
+  resetCounter(ledGridResetPin);
+  // vis på LED-Grid
+  for (int i = 0; i < 9; i++) {
+    if (reedBoard[i] == true) {
+      delay(2);
+    }
+    clockCounter(ledGridClockPin);
+  }
+  delay(1);
+  // ##### LED AND REED LOOP END   #####
 }
 
 bool checkWin() {
@@ -160,4 +250,21 @@ void moveServoTo(Servo servo, int angleTo) {
     servo.write(writeAngle);
     delay(50);
   }
+}
+
+// Denne funktion giver en PULS til 4017
+void resetCounter(int pin) {
+  //  digitalWrite(pin, HIGH);
+  //  delayMicroseconds(1);
+  //  digitalWrite(pin, LOW);
+  //  delayMicroseconds(1);
+  clockCounter(pin);
+}
+
+// Denne funktion giver en CLOCK puls til 4017
+void clockCounter(int pin) {
+  digitalWrite(pin, HIGH);
+  delayMicroseconds(1);
+  digitalWrite(pin, LOW);
+  delayMicroseconds(1);
 }
