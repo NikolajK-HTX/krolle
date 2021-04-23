@@ -49,6 +49,8 @@ bool pastReedBoard[9];
 const int elektroPin = 11;
 
 void setup() {
+  pinMode(elektroPin, OUTPUT);
+  
   // ##### SERVO SETUP START #####
   servo1.attach(servo1Pin);
   servo2.attach(servo2Pin);

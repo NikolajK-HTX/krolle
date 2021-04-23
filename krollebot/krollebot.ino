@@ -19,14 +19,21 @@
 
 const int boardSize = 3;
 
-int board [3][3];
-String currentTurn = "X";
+// [i][j] i er række nr. og j er kolonne nr.
+char board [3][3] = {
+  {' ', ' ', ' '},
+  {' ', ' ', ' '},
+  {' ', ' ', ' '}
+};
+// Robotarmen er altid bolle! Så man starter med at placere en brik
+// på brættet
+char currentTurn = 'X';
 
 int positionc = 0;
 
 // Manuelt målte vinkler servomotorerne skal have
 // for at elektromagneten passer præcist til den plads
-int anglePositions [30] = {100, 107,  60,
+int anglePositions [33] = {100, 107,  60,
                            85,  115,  75,
                            72,  110,  65,
                            103, 130,  105,
@@ -35,7 +42,8 @@ int anglePositions [30] = {100, 107,  60,
                            118, 148,  142,
                            82,  155,  153,
                            50,  146,  136,
-                           83,  150,  100
+                           83,  150,  100, // Position over brættet -> Pause position
+                           115,  90,   25
                           };
 
 // tror vi ender med ikke at bruge det her
@@ -55,6 +63,8 @@ Servo servo3;
 const int servo1Pin = 3;
 const int servo2Pin = 5;
 const int servo3Pin = 6;
+
+const int elektroPin = 11;
 
 // ##### LED AND REED SETTINGS  #####
 const int reedInputPin = 2;
@@ -77,7 +87,9 @@ void setup() {
   servo1.write(angleZero);
   servo2.write(angleOne);
   servo3.write(angleTwo);
+
   // ##### SERVO SETUP END      #####
+  pinMode(elektroPin, OUTPUT);
 
   // ##### LED AND REED SETUP   #####
   pinMode(reedInputPin, INPUT);
@@ -111,60 +123,62 @@ void setup() {
 
 void loop() {
   // ##### INPUT FRA MODSTANDER + FLYT ARM START #####
-  // venter input for at bestemme hvilken position robotarmen skal
-  // gå hen til. Det er af debug grunde.
-  if (Serial.available()) {
-    String incomingString = Serial.readStringUntil('\n');
-    positionc = incomingString.toInt();
+  // det sker kun hvis det er dens tur (bolles tur)
+  if (currentTurn == 'O') {
+    // venter input for at bestemme hvilken position robotarmen skal
+    // gå hen til. Det er af debug grunde.
+    if (Serial.available()) {
+      String incomingString = Serial.readStringUntil('\n');
+      positionc = incomingString.toInt();
+      Serial.print("Debug: Flytter robotarmen til " + String(positionc));
 
-    angleZero = anglePositions[positionc * 3 + 0];
-    angleOne  = anglePositions[positionc * 3 + 1];
-    angleTwo  = anglePositions[positionc * 3 + 2];
+      // man har modtaget en position spilleren gerne vil lægge en brik på
+      // først tændes der for servomotoren
+      digitalWrite(elektroPin, HIGH);
+      // dernæst hentes en brik
+      angleZero = anglePositions[10 * 3 + 0];
+      angleOne  = anglePositions[10 * 3 + 1];
+      angleTwo  = anglePositions[10 * 3 + 2];
+      moveServoTo(servo1, angleZero);
+      moveServoTo(servo3, angleTwo);
+      moveServoTo(servo2, angleOne);
 
-    moveServoTo(servo1, angleZero);
-    moveServoTo(servo2, angleOne);
-    moveServoTo(servo3, angleTwo);
+      delay(1500);
 
-    Serial.print("Debug: Flytter robotarmen til " + String(positionc) + "  -  ");
-    Serial.print(angleZero);
-    Serial.print("   ");
-    Serial.print(angleOne);
-    Serial.print("   ");
-    Serial.print(angleTwo);
-    Serial.println();
+      // Derefter flyttes den op i pause positionen
+      angleOne  = anglePositions[9 * 3 + 1];
+      angleTwo  = anglePositions[9 * 3 + 2];
+      moveServoTo(servo2, angleOne);
+      moveServoTo(servo3, angleTwo);
+
+      // Så flyttes den ned til der hvor brikken skal lægges
+      angleZero = anglePositions[positionc * 3 + 0];
+      angleOne  = anglePositions[positionc * 3 + 1];
+      angleTwo  = anglePositions[positionc * 3 + 2];
+
+      moveServoTo(servo1, angleZero);
+      moveServoTo(servo2, angleOne);
+      moveServoTo(servo3, angleTwo);
+
+      // og slipper for brikken
+      digitalWrite(elektroPin, LOW);
+
+      // Og til sidst flyttes den op i pause positionen
+      angleZero = anglePositions[9 * 3 + 0];
+      angleOne  = anglePositions[9 * 3 + 1];
+      angleTwo  = anglePositions[9 * 3 + 2];
+      moveServoTo(servo2, angleOne);
+      moveServoTo(servo3, angleTwo);
+      moveServoTo(servo1, angleZero);
+
+      updateReedArray();
+      
+      currentTurn = 'X';
+    }
   }
   // ##### INPUT FRA MODSTANDER + FLYT ARM END   #####
 
-  // ##### LED AND REED LOOP START #####
-  // reset 4017 tælleren
-  resetCounter(counterResetPin);
-
-  // læs alle REED switch og gem i array
-  for (int i = 0; i < 9; i++) {
-    delayMicroseconds(10);
-    bool sensorVal = digitalRead(reedInputPin);
-    reedBoard[i] = sensorVal;
-    // Skift til næste REED switch
-    clockCounter(counterClockPin);
-  }
-
-  for (int i = 0; i < 9; i++) {
-    Serial.print(reedBoard[i]);
-  }
-  Serial.println();
-
-  // sammenlign de to arrays og sørg for at der er noget på
-  // pladsen
-  for (int i = 0; i < 9; i++) {
-    if (reedBoard[i] != pastReedBoard[i] && reedBoard[i] != false) {
-      Serial.println("En brik er på plads " + String(i));
-    }
-  }
-
-  // gem array
-  for (int i = 0; i < 9; i++) {
-    pastReedBoard[i] = reedBoard[i];
-  }
+  updateReedArray();
 
   // reset LED-grid
   resetCounter(ledGridResetPin);
@@ -195,43 +209,6 @@ bool checkWin() {
       // vundet
     }
   }
-}
-
-void calculateAngleFromPos(int boardIndex) {
-  // Afstanden mellem armen og bræt-positionen bestemmes med Pythagoras' læresætning
-  float x = realPositions[boardIndex * 2];
-  float xAbs = abs(x);
-  float y = realPositions[boardIndex * 2 + 1];
-  float yAbs = abs(y);
-
-  // Ifølge Arduino reference skal der ikke stå en funktion
-  // inde i sq(), hvilket der gjorde før hvor abs() stod derinde
-  // https://www.arduino.cc/reference/en/language/functions/math/sq/
-  float xySquared = sq(xAbs) + sq(yAbs);
-
-  // Arduino reference siger ikke noget om, at der må stå funktioner
-  // inde i sqrt(), men for en sikkerhedsskyld gøres det ikke
-  float distanceArmToPosition = sqrt(xySquared);
-
-  float tempSquared = sq(distanceArmToPosition) + sq(armDownOffset);
-  float offsetDistance = sqrt(tempSquared);
-  float angleOffset = asin(armDownOffset / offsetDistance);
-
-  Serial.print("Distance from arm to pos is ");
-  Serial.println(distanceArmToPosition);
-
-  // funktionerne i C++ regner med radianer når der skrives til
-  // servomotorerne skal det være i grader, derfor omregnes det til sidst
-  // første servomotor
-  float servoAngle = HALF_PI - asin(x / distanceArmToPosition);
-  angleZero = 180 / PI * servoAngle;
-  // anden servomotor
-  servoAngle = acos((sq(r1) + sq(offsetDistance) - sq(r2)) / (2 * r1 * offsetDistance))
-               + HALF_PI - angleOffset;
-  angleOne = 180 / PI * servoAngle;
-  // tredje servomotor
-  servoAngle = acos((sq(r1) + sq(r2) - sq(offsetDistance)) / (2 * r1 * r2));
-  angleTwo = 180 - (180 / PI * servoAngle) + 7;
 }
 
 // bevæger servomotorerne langsommere på en blokerende måde
@@ -267,4 +244,58 @@ void clockCounter(int pin) {
   delayMicroseconds(1);
   digitalWrite(pin, LOW);
   delayMicroseconds(1);
+}
+
+void moveServosToCentral() {
+  int t_angleZero = anglePositions[positionc * 3 + 0];
+  int t_angleOne  = anglePositions[positionc * 3 + 1];
+  int t_angleTwo  = anglePositions[positionc * 3 + 2];
+
+  moveServoTo(servo1, t_angleZero);
+  moveServoTo(servo2, t_angleOne);
+  moveServoTo(servo3, t_angleTwo);
+}
+
+void resetBoard() {
+  for (int r = 0; r < 3; r++) {
+    for (int k = 0; k < 3; k++) {
+      board[r][k] = ' ';
+    }
+  }
+}
+
+void updateReedArray() {
+  // ##### LED AND REED LOOP START #####
+  // reset 4017 tælleren
+  resetCounter(counterResetPin);
+
+  // læs alle REED switch og gem i array
+  for (int i = 0; i < 9; i++) {
+    delayMicroseconds(10);
+    bool sensorVal = digitalRead(reedInputPin);
+    reedBoard[i] = sensorVal;
+    // Skift til næste REED switch
+    clockCounter(counterClockPin);
+  }
+
+  // sammenlign de to arrays og undersøg om der er noget på
+  // pladsen
+  for (int i = 0; i < 9; i++) {
+    if (reedBoard[i] != pastReedBoard[i] && reedBoard[i] != false) {
+      Serial.println("Debug: En brik er på plads " + String(i));
+      if (currentTurn == 'X') {
+        Serial.println(i);
+        int r = floor(i / 3);
+        int k = i % 3;
+        board[r][k] = 'X';
+        // skifter tur
+        currentTurn = 'O';
+      };
+    }
+  }
+
+  // gem array
+  for (int i = 0; i < 9; i++) {
+    pastReedBoard[i] = reedBoard[i];
+  }
 }

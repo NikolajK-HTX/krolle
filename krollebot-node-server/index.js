@@ -18,9 +18,13 @@ const parser = port.pipe(new Readline())
 
 // modtager data fra Arduino Uno
 parser.on('data', (data) => {
-    console.log(data);
-    // videresender data til hjemmeside
-    io.emit("krollebot_message", data);
+    if (data.substring(0, 5) == "Debug") {
+        console.log("Debug tilstand: "+ data);
+    } else {
+        console.log("Sender data til hjemmeside: " + data);
+        // videresender data til hjemmeside
+        io.emit("krollebot_message", data);
+    }
 });
 
 io.on("connection", (socket) => {
@@ -28,10 +32,8 @@ io.on("connection", (socket) => {
 
     socket.on("krollebot_message", (message) => {
         port.write(message+'\n');
-        console.log("Har skrevet " + message + " til Arduino Uno.");
+        console.log("Skriver til Arduino Uno: " + message);
     });
 });
-
-
 
 httpServer.listen(8080);
