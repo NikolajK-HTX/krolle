@@ -1,5 +1,3 @@
-#include <Servo.h>
-
 /*
    Lavet af Buster, Emil og Nikolaj Jehøj-Krogager
    21/03/2021
@@ -17,6 +15,35 @@
     - Elektromagnet IN1  = 11
 */
 
+#include <Servo.h>
+
+// En klasse til 4017-kredse som gør det 
+// mere overskueligt styre dem
+class CD4017BE {
+  public:
+    int clockPin;
+    int resetPin;
+    CD4017BE(int clock_Pin, int reset_Pin) {
+      clockPin = clock_Pin;
+      resetPin = reset_Pin;
+    }
+    // clock er allerede en funktion
+    void nclock() {
+      pulse(clockPin);
+    }
+    // reset er allerede en funktion
+    void nreset() {
+      pulse(resetPin);
+    }
+  private:
+    void pulse(int pin) {
+      digitalWrite(pin, HIGH);
+      delayMicroseconds(1);
+      digitalWrite(pin, LOW);
+      delayMicroseconds(1);
+    }
+};
+
 const int boardSize = 3;
 
 // [i][j] i er række nr. og j er kolonne nr.
@@ -33,17 +60,17 @@ int positionc = 0;
 
 // Manuelt målte vinkler servomotorerne skal have
 // for at elektromagneten passer præcist til den plads
-int anglePositions [33] = {100, 107,  60,
-                           85,  115,  75,
-                           72,  110,  65,
-                           103, 130,  105,
-                           81,  132,  112,
-                           62,  129,  105,
-                           118, 148,  142,
-                           82,  155,  153,
-                           50,  146,  136,
-                           83,  150,  100, // Position over brættet -> Pause position
-                           115,  90,   25
+int anglePositions [33] = {100, 107,  60,  // Position 0
+                           85,  115,  75,  // Position 1
+                           72,  110,  65,  // Position 2
+                           103, 130,  105, // Position 3
+                           81,  132,  112, // Position 4
+                           62,  129,  105, // Position 5
+                           118, 148,  142, // Position 6
+                           82,  155,  153, // Position 7
+                           50,  146,  136, // Position 8
+                           83,  150,  100, // Position over brættet
+                           115,  90,   25  // Position til at hente brikker
                           };
 
 // tror vi ender med ikke at bruge det her
@@ -74,6 +101,9 @@ const int counterResetPin = 8;
 const int ledGridClockPin = 7;
 const int ledGridResetPin = 9;
 
+CD4017BE reedCounter(counterClockPin, counterResetPin);
+CD4017BE ledCounter(ledGridClockPin, ledGridResetPin);
+
 bool reedBoard[9];
 bool pastReedBoard[9];
 // ##### LED AND REED END       #####
@@ -97,7 +127,7 @@ void setup() {
   pinMode(counterResetPin, OUTPUT);
   digitalWrite(counterClockPin, LOW);
   digitalWrite(counterResetPin, LOW);
-  resetCounter(counterResetPin);
+  reedCounter.nreset();
 
   for (int i = 0; i < 9; i++) {
     reedBoard[i] = false;
@@ -109,10 +139,10 @@ void setup() {
   pinMode(ledGridResetPin, OUTPUT);
   digitalWrite(ledGridClockPin, LOW);
   digitalWrite(ledGridResetPin, LOW);
-  resetCounter(ledGridResetPin);
+  ledCounter.nreset();
   // parkerer 4017 tælleren til LED på plads 10 (OUTPUT 9)
   for (int i = 0; i < 9; i++) {
-    clockCounter(ledGridClockPin);
+    ledCounter.nclock();
   }
   // ##### LED AND REED END     #####
 
@@ -172,7 +202,7 @@ void loop() {
       moveServoTo(servo1, angleZero);
 
       updateReedArray();
-      
+
       currentTurn = 'X';
     }
   }
@@ -181,34 +211,40 @@ void loop() {
   updateReedArray();
 
   // reset LED-grid
-  resetCounter(ledGridResetPin);
+  ledCounter.nreset();
   // vis på LED-Grid
   for (int i = 0; i < 9; i++) {
     if (reedBoard[i] == true) {
       delay(2);
     }
-    clockCounter(ledGridClockPin);
+    ledCounter.nclock();
   }
   delay(1);
   // ##### LED AND REED LOOP END   #####
 }
 
+// Denne funktion tjekker board array for om nogen har vundet
+//
 bool checkWin() {
+  bool won = false;
   for (int i = 0; i < boardSize; i++) {
     // tjek vandret
-    if (board[i][0] == board[i][1] && board[i][1] == board[i][2]) {
-      // vundet
+    if (board[i][0] != ' ' && board[i][0] == board[i][1] &&
+        board[i][1] == board[i][2]) {
+      won = true;
     }
     // tjek lodret
-    if (board[0][i] == board[1][i] && board[1][i] == board[2][i]) {
-      // vundet
-    }
-    // tjek diagonaler
-    if ((board[0][0] == board[1][1] && board[1][1] == board[2][2]) ||
-        (board[0][2] == board[1][1] && board[1][1] == board[2][0])) {
-      // vundet
+    if (board[0][i] != ' ' && board[0][i] == board[1][i] &&
+        board[1][i] == board[2][i]) {
+      won = true;
     }
   }
+  // tjek diagonaler
+  if ((board[0][0] != ' ' && board[0][0] == board[1][1] && board[1][1] == board[2][2]) ||
+      (board[0][2] != ' ' && board[0][2] == board[1][1] && board[1][1] == board[2][0])) {
+    won = true;
+  }
+  return won;
 }
 
 // bevæger servomotorerne langsommere på en blokerende måde
@@ -227,23 +263,6 @@ void moveServoTo(Servo servo, int angleTo) {
     servo.write(writeAngle);
     delay(50);
   }
-}
-
-// Denne funktion giver en PULS til 4017
-void resetCounter(int pin) {
-  //  digitalWrite(pin, HIGH);
-  //  delayMicroseconds(1);
-  //  digitalWrite(pin, LOW);
-  //  delayMicroseconds(1);
-  clockCounter(pin);
-}
-
-// Denne funktion giver en CLOCK puls til 4017
-void clockCounter(int pin) {
-  digitalWrite(pin, HIGH);
-  delayMicroseconds(1);
-  digitalWrite(pin, LOW);
-  delayMicroseconds(1);
 }
 
 void moveServosToCentral() {
@@ -267,7 +286,7 @@ void resetBoard() {
 void updateReedArray() {
   // ##### LED AND REED LOOP START #####
   // reset 4017 tælleren
-  resetCounter(counterResetPin);
+  reedCounter.nreset();
 
   // læs alle REED switch og gem i array
   for (int i = 0; i < 9; i++) {
@@ -275,7 +294,7 @@ void updateReedArray() {
     bool sensorVal = digitalRead(reedInputPin);
     reedBoard[i] = sensorVal;
     // Skift til næste REED switch
-    clockCounter(counterClockPin);
+    reedCounter.nclock();
   }
 
   // sammenlign de to arrays og undersøg om der er noget på
