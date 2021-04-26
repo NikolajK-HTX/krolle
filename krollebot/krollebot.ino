@@ -17,7 +17,7 @@
 
 #include <Servo.h>
 
-// En klasse til 4017-kredse som gør det 
+// En klasse til 4017-kredse som gør det
 // mere overskueligt styre dem
 class CD4017BE {
   public:
@@ -187,8 +187,16 @@ void loop() {
       angleTwo  = anglePositions[positionc * 3 + 2];
 
       moveServoTo(servo1, angleZero);
-      moveServoTo(servo2, angleOne);
-      moveServoTo(servo3, angleTwo);
+      // servomotoren går ned til en position tæt på robotarmen
+      if (servo3.read() < angleTwo) {
+        moveServoTo(servo2, angleOne);
+        moveServoTo(servo3, angleTwo);
+      }
+      // servomotoren går hen til en af de øvre positioner (0, 1 og 2)
+      if (servo3.read() > angleTwo) {
+        moveServoTo(servo3, angleTwo);
+        moveServoTo(servo2, angleOne);
+      }
 
       // og slipper for brikken
       digitalWrite(elektroPin, LOW);
